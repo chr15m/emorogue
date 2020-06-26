@@ -1,0 +1,22 @@
+.nanoo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nanoo > * {
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 0px;
+  position: absolute;
+}
+
+.nanoo-fill-window {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+}

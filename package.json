@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "hyperscript": "^2.0.2",
+    "shadow-cljs": "^2.10.13"
+  }
+}
