@@ -1,10 +1,24 @@
 {:source-paths ["src"]
- :dependencies []
+ :dependencies [[reagent "1.0.0-alpha2"]
+                [org.clojure/core.async "1.1.587"]]
  :dev-http {8000 "public/"}
  :builds {:app {:target :browser
                 :output-dir "public/js"
                 :asset-path "js"
-                :modules {:main {:init-fn emorogue.core/main!}}
-                :devtools {:after-load emorogue.core/reload!
+                :devtools {:browser-inject :main
                            :preloads [shadow.remote.runtime.cljs.browser]}
-                :release {:output-dir "build/js"}}}}
+                :modules {:shared {:entries []}
+                          :main {:init-fn emorogue.core/main
+                                 :depends-on #{:shared}}
+                          :worker {:init-fn emorogue.rotworker/init
+                                   :depends-on #{:shared}
+                                   :web-worker true}}}
+          :prod {:target :browser
+                 :output-dir "build/js"
+                 :asset-path "js"
+                 :modules {:shared {:entries []}
+                           :main {:init-fn emorogue.core/main
+                                  :depends-on #{:shared}}
+                           :worker {:init-fn emorogue.rotworker/init
+                                    :depends-on #{:shared}
+                                    :web-worker true}}}}}
