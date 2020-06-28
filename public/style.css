@@ -2,6 +2,8 @@
   box-sizing: border-box;
   margin: 0px;
   padding: 0px;
+  font-family: courier;
+  color: #333;
 }
 
 body, html {
@@ -20,4 +22,12 @@ body, html {
     0% {transform:rotate(0deg);}
     25% {transform:rotate(360deg);}
     100% {transform:rotate(360deg);}
+}
+
+#title {
+  text-align: center;
+}
+
+#title > * + * {
+  margin: 2em;
 }
