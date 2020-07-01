@@ -1,4 +1,5 @@
-(ns emorogue.rotclient)
+(ns emorogue.rotclient
+  (:require [clojure.core.async :refer [go chan put!]]))
 
 (defonce callbacks (atom {}))
 
@@ -19,14 +20,10 @@
 (defn make-uid []
   (-> (js/Math.random) str (.split ".") .pop int))
 
-(defn rpc [worker call args callback]
-  (let [uid (make-uid)]
-    (swap! callbacks assoc uid callback)
-    (.postMessage worker (clj->js [uid call args]))))
-
-#_ (js/setTimeout (fn []
-                 (js/console.log "Triggering map generation")
-                 (rpc "generate-cellular-map" [(js/Math.random) 1024 1024 0.5 {:connected true}] (fn [m] (js/console.log "got map:" (clj->js m))))
-                 
-                 )
-               100) 
+(defn rpc [worker call args]
+  (let [uid (make-uid)
+        c (chan)]
+    (go
+      (swap! callbacks assoc uid #(put! c %))
+      (.postMessage worker (clj->js [uid call args])))
+    c))
