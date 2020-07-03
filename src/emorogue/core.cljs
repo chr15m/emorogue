@@ -4,17 +4,9 @@
     [reagent.core :as r]
     [reagent.dom :as rdom]
     [emorogue.rotclient :as rot-worker]
+    [emorogue.tables :refer [items-table sentence-table]]
     ["rot-js/dist/rot.min.js" :as rot]
     [clojure.core.async :refer [go <!]]))
-
-; ***** tables ***** ;
-
-(def items-table
-  [{:name "money-bag"}
-   {:name "baguette-bread"}
-   {:name "pizza"}
-   {:name "pizza"}
-   {:name "sushi"}])
 
 ; ***** functions ***** ;
 
@@ -33,7 +25,11 @@
          n quantity]
     (let [index (js/Math.floor (* (.getUniform rng) (count b)))]
       (if (and (> n 0) (> (count b) 0))
-        (recur (conj chosen (nth b index)) (vec-remove index b) (dec n))
+        (recur (conj chosen (nth b index))
+               (if (= (count b) 1)
+                 bag
+                 (vec-remove index b))
+               (dec n))
         chosen))))
 
 (defn available-tiles-from-map-tiles
@@ -47,15 +43,27 @@
                 [col row]
                 nil))))))
 
-(defn make-item [pos]
-  (assoc
-    (first (from-bag rot/RNG items-table 1))
-    :pos pos))
+(defn make-items [rng n available-tiles]
+  (let [item-tiles (from-bag rng available-tiles n)
+        items (from-bag rng items-table n)]
+    (hash-map (map vector item-tiles items))))
 
-(defn make-items [n available-tiles]
-  (into {}
-    (for [pos (from-bag rot/RNG available-tiles n)]
-      {pos (make-item pos)})))
+(defn make-sentences [rng n]
+  (let [[verbs adjectives nouns subjects] (map #(from-bag rng (sentence-table %) n)
+                                               [:verb :adjective :noun :subject])]
+    (map (fn [i]
+           (let [adjective (nth adjectives i)]
+             (str
+               (nth verbs i)
+               (if (>= (.indexOf "aeiou" (first adjective)) 0)
+                 " an "
+                 " a ")
+               adjective
+               " "
+               (nth nouns i)
+               " on "
+               (nth subjects i))))
+         (range n))))
 
 ; ***** events ***** ;
 
@@ -63,7 +71,7 @@
   (go
     (let [map-tiles (<! (rot-worker/rpc (@state :rw) "generate-cellular-map" [(js/Math.random) 22 80 0.5 {:connected true}]))
           available-tiles (available-tiles-from-map-tiles map-tiles)
-          items (make-items 10 available-tiles)]
+          items (make-items rot/RNG 10 available-tiles)]
       (log "got map" map-tiles)
       (log "available tiles" available-tiles)
       (log "items" items)
@@ -90,8 +98,8 @@
 
 (defn component-title-screen [state]
   [:div#title
-   [:h1 "u must secure the bag"]
-   [:p [:i.twa.twa-5x.twa-money-bag]]
+   [:h1 "need. coffee. stat."]
+   [:p [:i.twa.twa-5x.twa-hot-beverage]]
    [:button.primary {:on-click (partial make-level state)} "Start"]])
 
 (defn component-game [state]
@@ -107,6 +115,7 @@
 
 (defn ^:dev/after-load start []
   (log "start")
+  (log (make-sentences rot/RNG 10))
   (rdom/render [component-game state] (js/document.getElementById "game")))
 
 (defn main []
