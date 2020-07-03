@@ -98,6 +98,7 @@
           "articulates"
           "proclaims"
           "exclaims"
+          "recounts"
           "expatiates"]
    :adjective ["brutal"
                "gut wrenching"
@@ -276,5 +277,12 @@
           "the history of australia"
           "czechoslovakian jazz"
           "elliptic curve cryptography"
+          "the history of punk subculture"
+          "cypherpunk heroes"
+          "the greek dark ages"
+          "chivalry"
+          "the museum aesthetic"
+          "an incomplete history of berserkers"
+          "whale song"
           ]})
 
