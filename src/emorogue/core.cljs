@@ -46,7 +46,7 @@
 (defn make-items [rng n available-tiles]
   (let [item-tiles (from-bag rng available-tiles n)
         items (from-bag rng items-table n)]
-    (hash-map (map vector item-tiles items))))
+    (into {} (map vector item-tiles items))))
 
 (defn make-sentences [rng n]
   (let [[verbs adjectives nouns subjects] (map #(from-bag rng (sentence-table %) n)
