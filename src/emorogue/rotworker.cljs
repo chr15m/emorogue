@@ -8,9 +8,10 @@
    (fn [seed w h r opts]
      (js/console.log "worker: generate-cellular-map" seed w h r opts)
      (ROT/RNG.setSeed (str seed))
-     (let [m (ROT/Map.Digger. w h opts)
+     (let [m (ROT/Map.Rogue. w h opts)
            map-shape (make-array nil w h)]
        (.create m (partial aset map-shape))
+       ;(js/console.log map-shape (.getCorridors m) (.getRooms m))
        map-shape))
    "compute-field-of-view"
    (fn [tiles x y]
