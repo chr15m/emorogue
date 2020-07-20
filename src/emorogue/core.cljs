@@ -32,17 +32,6 @@
                (dec n))
         chosen))))
 
-(defn available-tiles-from-map-tiles
-  "make a list of positions with an available tile."
-  [map-tiles]
-  (vec (filter identity
-          (for [row (range (count map-tiles))
-                col (range (count (first map-tiles)))]
-            (let [t (-> map-tiles (nth row) (nth col))]
-              (if (= t 0)
-                [col row]
-                nil))))))
-
 (defn make-items [rng n available-tiles]
   (let [item-tiles (from-bag rng available-tiles n)
         items (from-bag rng items-table n)]
@@ -65,36 +54,37 @@
                (nth subjects i))))
          (range n))))
 
+(defn move-to [pos & [attrs]]
+  (let [x (* (second pos) 40)
+        y (* (first pos) 40)]
+    (assoc-in (or attrs {})
+              [:style :transform]
+              (str "translate(" x "px," y "px)"))))
+
 ; ***** events ***** ;
 
 (defn make-level [state]
   (go
-    (let [map-tiles (<! (rot-worker/rpc (@state :rw) "generate-cellular-map" [(js/Math.random) 22 80 0.5 {:connected true}]))
-          available-tiles (available-tiles-from-map-tiles map-tiles)
+    (let [dungeon-map (<! (rot-worker/rpc (@state :rw) "generate-cellular-map" [(js/Math.random) 80 22 0.5 {:connected true}]))
+          available-tiles (get dungeon-map "map")
           items (make-items rot/RNG 10 available-tiles)]
-      (log "got map" map-tiles)
+      (log "got map" dungeon-map)
       (log "available tiles" available-tiles)
       (log "items" items)
-      (swap! state assoc-in [:game :map] map-tiles)
+      (swap! state assoc-in [:game :map] dungeon-map)
       (swap! state assoc-in [:game :items] items))))
 
 ; ***** views ***** ;
 
-(defn component-game-map [m items]
+(defn component-game-map [state m items]
   (log "game-map-render")
-  ; TODO: more efficient to only draw squares with something on them
-  [:pre
-   (for [row (range (count m)) col (range (count (first m)))]
-     [:span {:key (str row "-" col)}
-      (let [pos [col row]
-            floor (-> m (nth row) (nth col))
-            item (-> items (get pos) :name)
-            square (if item (str "twa-" item) "twa-black-large-square")]
-        [:i.twa.twa-1x {:class (case floor
-                                 0 square
-                                 1 ""
-                                 "")}])
-      (when (= col (dec (count (first m)))) "\n")])])
+  [:div (move-to [-40 -11] {:on-click #(reset! state {})})
+   (for [pos (get m "map")]
+     [:i.twa.twa-1x (move-to pos {:class "tile twa-black-large-square"
+                                  :key ["floor" pos]})])
+   (for [[pos item] items]
+     [:i.twa.twa-1x (move-to pos {:class (str "tile twa-" (item :name))
+                                  :key ["item" pos]})])])
 
 (defn component-title-screen [state]
   [:div#title
@@ -106,7 +96,7 @@
   (let [m (-> @state :game :map)
         items (-> @state :game :items)]
     (if m
-      [component-game-map m items]
+      [component-game-map state m items]
       [component-title-screen state])))
 
 ; ***** launch ***** ;
